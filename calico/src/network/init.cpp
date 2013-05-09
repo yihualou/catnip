@@ -4,6 +4,8 @@
 #include "init.h"
 
 namespace catnip {
+  std::map<cl_context, bool> InitializerProgram::init_done;
+
   RandomInitializer::RandomInitializer(float magnitude) : magnitude_(magnitude) {
     InitializerProgram::init(); 
   }

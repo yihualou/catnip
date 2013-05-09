@@ -12,6 +12,8 @@
 
 namespace catnip {
   struct ConvolutionProgram : public OclProgram<ConvolutionProgram> {
+    static std::map<cl_context, bool> init_done;
+
     static inline std::string program_name() {
       return "catnip_convolution";
     }

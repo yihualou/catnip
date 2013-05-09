@@ -26,9 +26,12 @@ inline float round(float r) {
 }
 
 void cifar() {
+  ConvolutionProgram::init();
+  viennacl::ocl::set_context_device_type(0, viennacl::ocl::cpu_tag());
+
   CifarDataset ds(3 * 1024, 10);
   CifarDataset ds2(3 * 1024, 10);
-  ds.load("/Users/ylou/Code/catnip/res/cifar-10-batches-bin/data_batch_2.bin", 10);
+  ds.load("/Users/ylou/Code/catnip/res/cifar-10-batches-bin/data_batch_2.bin", 100);
   ds2.load("/Users/ylou/Code/catnip/res/cifar-10-batches-bin/test_batch.bin", 100);
 
   LinearActivator scaling_activator(1.0f / 256.0f);
@@ -56,8 +59,8 @@ void cifar() {
   FanInInitializer ri(1.0f);
   network->initialize(ri);
 
-  BackpropTrainer trainer(0.1f);
-  trainer.train(*network, ds, 50);
+  BackpropTrainer trainer(0.5f);
+  trainer.train(*network, ds, 200);
 
   int correct = 0;
   boost::array<float, 10> guess;

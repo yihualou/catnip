@@ -6,6 +6,8 @@
 #include "rbm.h"
 
 namespace catnip {
+  std::map<cl_context, bool> RbmProgram::init_done;
+
   void RbmActivator::activate(const viennacl::vector<float>& input, viennacl::vector<float>& output) {
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(RbmProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel("rbm_activate");

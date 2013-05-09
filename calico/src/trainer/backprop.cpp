@@ -6,6 +6,8 @@
 #include "backprop.h"
 
 namespace catnip {
+  std::map<cl_context, bool> BackpropProgram::init_done;
+
   BackpropTrainer::BackpropTrainer(float alpha) : delegate_(new DefaultDelegate(alpha)) {}
 
   BackpropTrainer::BackpropTrainer(Delegate* delegate) : delegate_(delegate) {}
@@ -45,6 +47,8 @@ namespace catnip {
 
           layer.activate(derivatives_[j]);
           conn.layer_propogate(layer, next_layer);
+          viennacl::ocl::get_queue().finish();
+          
           outputs_[j] = layer.get_value();
         }
         Layer& output_layer = network.get_output_layer();
@@ -59,8 +63,13 @@ namespace catnip {
           Connection& conn = network.get_connection(j - 1);
 
           delegate_->backpropogate(sigmas_[j - 1], conn, sigmas_[j], derivatives_[j - 1]);
+          viennacl::ocl::get_queue().finish();
+
           delegate_->update(conn, sigmas_[j].get_value(), outputs_[j - 1]);
+          viennacl::ocl::get_queue().finish();
+
           delegate_->update(layer, sigmas_[j].get_value());
+          viennacl::ocl::get_queue().finish();
         } 
 
         fast_copy(error, host_error);
@@ -160,17 +169,26 @@ namespace catnip {
 
       for (int i = 0; i < fml_prev->get_num_feature_maps(); ++i) {
         FeatureMapArray::MatrixRange& fm_prev = fml_prev->get_feature_map(i);
-        FeatureMapArray::MatrixRange& fm_curr = fml_curr->get_feature_map(i);
+        viennacl::matrix<float> sigma_buffer = 
+          viennacl::zero_matrix<float>(fm_prev.size1(), fm_prev.size2());
 
-        viennacl::matrix<float> filter_trans = trans(dc->get_filter(i, 0));
-        convolve2d_full(
-          fm_curr, 
-          fm_prev,
-          filter_trans,
-          fml_curr->get_width(),
-          fml_curr->get_height(),
-          dc->get_filter_width(),
-          dc->get_filter_height());
+        for (int j = 0; j < fml_curr->get_num_feature_maps(); ++j) {
+          FeatureMapArray::MatrixRange& fm_curr = fml_curr->get_feature_map(j);
+
+          // Overwrite fm_prev and save sum in sigma_buffer
+          viennacl::matrix<float> filter_trans = trans(dc->get_filter(i, j));
+          convolve2d_full(
+            fm_curr, 
+            fm_prev,
+            filter_trans,
+            fml_curr->get_width(),
+            fml_curr->get_height(),
+            dc->get_filter_width(),
+            dc->get_filter_height());
+
+          sigma_buffer += fm_prev;
+        }
+        fm_prev = sigma_buffer;
       }
 
       fml_prev->get_value() = viennacl::linalg::element_prod(

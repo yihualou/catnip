@@ -4,6 +4,8 @@
 #include "convolution.h"
 
 namespace catnip {
+  std::map<cl_context, bool> ConvolutionProgram::init_done;
+
   ConvolutionConnection::ConvolutionConnection(
       unsigned int width,
       unsigned int height,
@@ -14,14 +16,16 @@ namespace catnip {
       : Connection(width * height * num_input_feature_maps, calc_output_width(width, filter_width) * calc_output_height(height, filter_height) * num_output_feature_maps), 
         width_(width), height_(height), 
         output_width_(calc_output_width(width, filter_width)), output_height_(calc_output_height(height, filter_height)),
-        num_input_feature_maps_(num_output_feature_maps), num_output_feature_maps_(num_output_feature_maps),
+        num_input_feature_maps_(num_input_feature_maps), num_output_feature_maps_(num_output_feature_maps),
         filter_width_(filter_width), filter_height_(filter_height) {
 
     for (unsigned int i = 0; i < num_input_feature_maps_; ++i) {
       boost::ptr_vector< viennacl::matrix<float> >* row = new boost::ptr_vector< viennacl::matrix<float> >();
       filters_.push_back(row);
       for (unsigned int j = 0; j < num_output_feature_maps_; ++j) {
-        row->push_back(new viennacl::matrix<float>(filter_height, filter_width));
+        viennacl::matrix<float>* mat = new viennacl::matrix<float>(filter_height, filter_width);
+        *mat = viennacl::zero_matrix<float>(filter_height, filter_width);
+        row->push_back(mat);
       }
     }
   }
@@ -30,7 +34,7 @@ namespace catnip {
       : Connection(other.ki_, other.ko_),
         width_(other.width_), height_(other.height_), 
         output_width_(other.output_width_), output_height_(other.output_height_),
-        num_input_feature_maps_(other.num_output_feature_maps_), num_output_feature_maps_(other.num_output_feature_maps_),
+        num_input_feature_maps_(other.num_input_feature_maps_), num_output_feature_maps_(other.num_output_feature_maps_),
         filter_width_(other.filter_width_), filter_height_(other.filter_height_) {
 
     filters_ = other.filters_;
@@ -101,7 +105,7 @@ namespace catnip {
         num_feature_maps_(num_feature_maps), factor_(factor) {
 
       for (int i = 0; i < num_feature_maps_; ++i) {
-        betas_.push_back(new viennacl::scalar<float>());
+        betas_.push_back(new viennacl::scalar<float>(0.0f));
       }
   }
 
@@ -113,7 +117,7 @@ namespace catnip {
         num_feature_maps_(other.num_feature_maps_), factor_(other.factor_) {
 
       for (int i = 0; i < num_feature_maps_; ++i) {
-        betas_.push_back(new viennacl::scalar<float>());
+        betas_.push_back(new viennacl::scalar<float>(0.0f));
       }
   }
 
@@ -142,7 +146,7 @@ namespace catnip {
   }
 
   void MaxPoolingConnection::propogate(viennacl::vector<float>& input, viennacl::vector<float>& output) {
-  ConvolutionProgram::init();
+    //ConvolutionProgram::init();
 
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(ConvolutionProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel("maxpool2d");
@@ -172,7 +176,7 @@ namespace catnip {
       unsigned int filter_width, 
       unsigned int filter_height) {
 
-    ConvolutionProgram::init();
+    //ConvolutionProgram::init();
 
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(ConvolutionProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel("convolve2d_full");
@@ -208,7 +212,7 @@ namespace catnip {
       unsigned int filter_width, 
       unsigned int filter_height) {
 
-    ConvolutionProgram::init();
+    //ConvolutionProgram::init();
 
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(ConvolutionProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel("convolve2d_valid");
@@ -236,7 +240,7 @@ namespace catnip {
   }
 
   void upsample2d(viennacl::matrix_base<float>& input, viennacl::matrix_base<float>& output, const unsigned int width, const unsigned int height, const unsigned int factor) {
-    ConvolutionProgram::init();
+    //ConvolutionProgram::init();
 
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(ConvolutionProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel("upsample2d");

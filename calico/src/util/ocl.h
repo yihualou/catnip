@@ -9,8 +9,6 @@ namespace catnip {
   template<class Derived>
   struct OclProgram {
     static void init() {
-      static std::map<cl_context, bool> init_done;
-
       std::string program_name = Derived::program_name();
       std::string filename = OCL_ROOT_DIR + Derived::relative_path();
 
@@ -18,6 +16,7 @@ namespace catnip {
       std::string* kernel_names = Derived::kernel_names(num_kernels);
 
       viennacl::ocl::context & context = viennacl::ocl::current_context();
+      std::map<cl_context, bool>& init_done = Derived::init_done;
       if (!init_done[context.handle().get()]) {
         std::string source = get_file_contents(filename.c_str());
 

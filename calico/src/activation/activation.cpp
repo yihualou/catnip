@@ -1,6 +1,8 @@
 #include "activation.h"
 
 namespace catnip {
+  std::map<cl_context, bool> ActivationProgram::init_done;
+
   inline void generic_execute(const std::string& kernel, const viennacl::vector<float>& input, viennacl::vector<float>& output) {
     viennacl::ocl::program& prog = viennacl::ocl::current_context().get_program(ActivationProgram::program_name());
     viennacl::ocl::kernel& k = prog.get_kernel(kernel);

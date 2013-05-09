@@ -11,6 +11,8 @@
 
 namespace catnip {
   struct ActivationProgram : public OclProgram<ActivationProgram> {
+    static std::map<cl_context, bool> init_done;
+
     static inline std::string program_name() {
       return "catnip_activation";
     }

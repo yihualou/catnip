@@ -63,9 +63,11 @@ namespace catnip {
   void FeedForwardNetwork::initialize(const Initializer& initializer) {
     for (size_t i = 0; i < layers_.size(); ++i) {
       initializer.initialize(layers_[i]);
+      viennacl::ocl::get_queue().finish();
     }
     for (size_t i = 0; i < connections_.size(); ++i) {
       initializer.initialize(connections_[i]);
+      viennacl::ocl::get_queue().finish();
     }
   }
 

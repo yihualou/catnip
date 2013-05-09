@@ -15,6 +15,8 @@
 
 namespace catnip {
   struct InitializerProgram : public OclProgram<InitializerProgram> {
+    static std::map<cl_context, bool> init_done;
+
     static inline std::string program_name() {
       return "catnip_init";
     }

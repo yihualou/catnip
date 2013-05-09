@@ -1,6 +1,8 @@
 #include "error.h"
 
 namespace catnip {
+  std::map<cl_context, bool> ErrorProgram::init_done;
+  
   void RmsErrorFunction::evaluate(
       const viennacl::vector<float>& predicted, 
       const viennacl::vector<float>& actual,

@@ -16,6 +16,8 @@
 
 namespace catnip {
   struct RbmProgram : public OclProgram<RbmProgram> {
+    static std::map<cl_context, bool> init_done;
+
     static inline std::string program_name() {
       return "catnip_rbm";
     }

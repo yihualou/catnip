@@ -10,6 +10,8 @@
 
 namespace catnip {
   struct BackpropProgram : public OclProgram<BackpropProgram> {
+    static std::map<cl_context, bool> init_done;
+
     static inline std::string program_name() {
       return "catnip_backprop";
     }
